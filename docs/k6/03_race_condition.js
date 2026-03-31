@@ -16,7 +16,7 @@ import { check, sleep } from "k6";
 import { Counter } from "k6/metrics";
 
 const BASE_URL    = __ENV.BASE_URL || "http://localhost:3000";
-const TARGET_DATE = "2026-06-20"; // ngày mới để test logic v2
+const TARGET_DATE = "2026-08-15"; // ngày mới để test logic v2 (CheckIn)
 
 const successCount  = new Counter("race_booking_success");
 const conflictCount = new Counter("race_booking_conflict");
@@ -39,7 +39,7 @@ export default function () {
     guestName:      `Concurrent User ${__VU}`,
     phone:          `09012345${String(__VU).padStart(2, "0")}`,
     checkInDate:    TARGET_DATE,
-    checkOutDate:   "2026-05-17",
+    checkOutDate:   "2026-08-17", // CheckOut SAU CheckIn
     roomType:       "Căn Phi Thuyền 1 Giường", // cùng phòng
     consentGiven:   true,
     consentVersion: "policy-2026-03-01",
