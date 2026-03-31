@@ -16,7 +16,7 @@ import { check, sleep } from "k6";
 import { Counter } from "k6/metrics";
 
 const BASE_URL    = __ENV.BASE_URL || "http://localhost:3000";
-const TARGET_DATE = "2026-05-15"; // ngày cố định để detect collision
+const TARGET_DATE = "2026-06-20"; // ngày mới để test logic v2
 
 const successCount  = new Counter("race_booking_success");
 const conflictCount = new Counter("race_booking_conflict");

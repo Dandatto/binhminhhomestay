@@ -258,6 +258,27 @@ export class PostgresStore implements AppStore {
 
   async createBookingAggregate(input: BookingAggregateInput): Promise<BookingAggregateResult> {
     return this.withTransaction(async (tx) => {
+      // 1. Acquire an advisory lock for this room type to serialize concurrent booking attempts
+      // for the same physical resource (room type).
+      await tx.query("select pg_advisory_xact_lock(hashtext($1))", [input.booking.roomType]);
+
+      // 2. Check for overlapping bookings that are not cancelled or failed.
+      // Standard overlap logic: (S1 < E2) AND (S2 < E1)
+      const overlapResult = await tx.query(
+        `
+        select id from bookings
+        where room_type = $1
+        and status not in ('CANCELLED', 'FAILED')
+        and (check_in_date, check_out_date) overlaps ($2::date, $3::date)
+        limit 1
+        `,
+        [input.booking.roomType, input.booking.checkInDate, input.booking.checkOutDate]
+      );
+
+      if ((overlapResult.rowCount ?? 0) > 0) {
+        throw new Error("ROOM_ALREADY_BOOKED");
+      }
+
       const bookingCode = generateBookingCode();
       const bookingResult = await tx.query(
         `

@@ -93,6 +93,11 @@ export async function createBooking(input: {
     return { responseBody, statusCode: 202, replayed: false };
   } catch (error) {
     await store.failIdempotencyKey(idempotencyKey);
+    
+    if (error instanceof Error && error.message === "ROOM_ALREADY_BOOKED") {
+      throw new BookingServiceError(409, "Phòng này đã có người đặt trong thời gian bạn chọn. Vui lòng chọn ngày khác hoặc loại phòng khác.");
+    }
+    
     throw error;
   }
 }
