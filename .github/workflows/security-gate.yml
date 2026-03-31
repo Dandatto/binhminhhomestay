@@ -1,0 +1,24 @@
+name: security-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  baseline-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+
+      - name: Run baseline checks
+        run: bash scripts/ci_check_baseline.sh
+
+      - name: Run architecture checks
+        run: bash scripts/ci_check_architecture.sh

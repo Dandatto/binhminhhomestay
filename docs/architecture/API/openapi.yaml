@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Binh Minh Homestay API
+  version: 0.1.0
+  description: Core API contract for booking and consent workflows.
+servers:
+  - url: https://api.binhminh.quangninh.vn/api
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      parameters:
+        - in: query
+          name: deep
+          required: false
+          schema:
+            type: boolean
+          description: Enable deep probe for store/queue checks.
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Deep health check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /v1/bookings:
+    post:
+      summary: Create booking request
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '202':
+          description: Booking accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBookingResponse'
+        '400':
+          description: Validation error
+        '409':
+          description: Idempotency conflict or request already in progress
+
+  /v1/consents:
+    post:
+      summary: Record consent evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentRequest'
+      responses:
+        '201':
+          description: Consent recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, mode, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, fail]
+          example: ok
+        mode:
+          type: string
+          enum: [shallow, deep]
+        adapter:
+          type: string
+          example: postgres
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [ok, degraded, fail]
+        metrics:
+          type: object
+          properties:
+            outboxPending:
+              type: integer
+            outboxFailed:
+              type: integer
+            idempotencyInProgress:
+              type: integer
+        error:
+          type: string
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - guestName
+        - phone
+        - checkInDate
+        - checkOutDate
+        - roomType
+        - consentGiven
+        - consentVersion
+      properties:
+        guestName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        phone:
+          type: string
+          minLength: 8
+          maxLength: 20
+        checkInDate:
+          type: string
+          format: date
+        checkOutDate:
+          type: string
+          format: date
+        roomType:
+          type: string
+        note:
+          type: string
+          maxLength: 1000
+        consentGiven:
+          type: boolean
+        consentVersion:
+          type: string
+          example: policy-2026-03-01
+
+    CreateBookingResponse:
+      type: object
+      required: [bookingId, bookingCode, status, idempotencyKey, replayed]
+      properties:
+        bookingId:
+          type: string
+        bookingCode:
+          type: string
+        status:
+          type: string
+          enum: [PENDING_CONFIRMATION]
+        idempotencyKey:
+          type: string
+        replayed:
+          type: boolean
+
+    ConsentRequest:
+      type: object
+      required: [subjectType, subjectRef, consentType, consentGiven, policyVersion]
+      properties:
+        subjectType:
+          type: string
+          enum: [BOOKING, LEAD]
+        subjectRef:
+          type: string
+        consentType:
+          type: string
+          example: BOOKING_PRIVACY
+        consentGiven:
+          type: boolean
+        policyVersion:
+          type: string
+        sourceIp:
+          type: string
+        userAgent:
+          type: string
+
+    ConsentResponse:
+      type: object
+      required: [consentId, status]
+      properties:
+        consentId:
+          type: string
+        status:
+          type: string
+          enum: [RECORDED]

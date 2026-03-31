@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-sand-white: #FDFCF0;
+  --color-sunrise-yellow: #FFD700;
+  --color-ocean-blue: #003366;
+  --color-sky-blue: #87CEEB;
+  
+  --font-serif: var(--font-playfair), "Times New Roman", Times, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  
+  --radius-lg: 1rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-sand-white);
+    --foreground: var(--color-ocean-blue);
+    
+    --card: #ffffff;
+    --card-foreground: var(--color-ocean-blue);
+    
+    --popover: #ffffff;
+    --popover-foreground: var(--color-ocean-blue);
+    
+    --primary: var(--color-ocean-blue);
+    --primary-foreground: var(--color-sand-white);
+    
+    --secondary: var(--color-sky-blue);
+    --secondary-foreground: var(--color-ocean-blue);
+    
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    
+    --accent: var(--color-sunrise-yellow);
+    --accent-foreground: var(--color-ocean-blue);
+    
+    --destructive: #ef4444;
+    --destructive-foreground: #f8fafc;
+    
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: var(--color-ocean-blue);
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dandatto Glassmorphism Utility */
+.glass {
+  background: rgba(253, 252, 240, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 51, 102, 0.1);
+}
+
