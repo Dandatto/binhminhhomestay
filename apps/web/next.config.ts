@@ -15,6 +15,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["@react-email/components", "@react-email/render"],
   images: {
     remotePatterns: [
       {

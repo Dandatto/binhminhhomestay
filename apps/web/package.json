@@ -20,8 +20,6 @@
     "@ai-sdk/anthropic": "^3.0.64",
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/react": "^3.0.143",
-    "@react-email/components": "^1.0.10",
-    "@react-email/render": "^2.0.4",
     "@tailwindcss/typography": "^0.5.19",
     "@vercel/blob": "^2.3.2",
     "ai": "^6.0.141",
