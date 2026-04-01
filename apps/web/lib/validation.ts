@@ -7,6 +7,7 @@ export type CreateBookingPayload = {
   roomType: string;
   note?: string;
   consentGiven: boolean;
+  consentCrossBorder?: boolean;
   consentVersion: string;
 };
 
@@ -15,6 +16,7 @@ export type ConsentPayload = {
   subjectRef: string;
   consentType: string;
   consentGiven: boolean;
+  consentCrossBorder?: boolean;
   policyVersion: string;
   sourceIp?: string;
   userAgent?: string;
@@ -70,6 +72,7 @@ export function validateCreateBooking(payload: unknown): { ok: true; value: Crea
       roomType: String(p.roomType),
       note: typeof p.note === "string" ? p.note : undefined,
       consentGiven: true,
+      consentCrossBorder: typeof p.consentCrossBorder === "boolean" ? p.consentCrossBorder : undefined,
       consentVersion: String(p.consentVersion)
     }
   };
@@ -104,6 +107,7 @@ export function validateConsent(payload: unknown): { ok: true; value: ConsentPay
       subjectRef: String(p.subjectRef),
       consentType: String(p.consentType),
       consentGiven: p.consentGiven,
+      consentCrossBorder: typeof p.consentCrossBorder === "boolean" ? p.consentCrossBorder : undefined,
       policyVersion: String(p.policyVersion),
       sourceIp: typeof p.sourceIp === "string" ? p.sourceIp : undefined,
       userAgent: typeof p.userAgent === "string" ? p.userAgent : undefined

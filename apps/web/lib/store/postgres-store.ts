@@ -234,11 +234,11 @@ export class PostgresStore implements AppStore {
     const result = await pool.query(
       `
       insert into consent_logs
-      (subject_type, subject_ref, consent_type, consent_given, policy_version, source_ip, user_agent)
-      values ($1, $2, $3, $4, $5, $6, $7)
+      (subject_type, subject_ref, consent_type, consent_given, policy_version, source_ip, user_agent, consent_cross_border)
+      values ($1, $2, $3, $4, $5, $6, $7, coalesce($8, false))
       returning id
       `,
-      [input.subjectType, input.subjectRef, input.consentType, input.consentGiven, input.policyVersion, input.sourceIp ?? null, input.userAgent ?? null]
+      [input.subjectType, input.subjectRef, input.consentType, input.consentGiven, input.policyVersion, input.sourceIp ?? null, input.userAgent ?? null, input.consentCrossBorder ?? null]
     );
 
     return { consentId: asString(result.rows[0]?.id) };
@@ -295,11 +295,11 @@ export class PostgresStore implements AppStore {
       const consentResult = await tx.query(
         `
         insert into consent_logs
-        (subject_type, subject_ref, consent_type, consent_given, policy_version, source_ip, user_agent)
-        values ('BOOKING', $1, $2, $3, $4, $5, $6)
+        (subject_type, subject_ref, consent_type, consent_given, policy_version, source_ip, user_agent, consent_cross_border)
+        values ('BOOKING', $1, $2, $3, $4, $5, $6, coalesce($7, false))
         returning id
         `,
-        [booking.id, input.consent.consentType, input.consent.consentGiven, input.consent.policyVersion, input.consent.sourceIp ?? null, input.consent.userAgent ?? null]
+        [booking.id, input.consent.consentType, input.consent.consentGiven, input.consent.policyVersion, input.consent.sourceIp ?? null, input.consent.userAgent ?? null, input.consent.consentCrossBorder ?? null]
       );
 
       await tx.query(

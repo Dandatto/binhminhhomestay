@@ -55,6 +55,7 @@ export async function createBooking(input: {
       consent: {
         consentType: "BOOKING_PRIVACY",
         consentGiven: true,
+        consentCrossBorder: input.payload.consentCrossBorder,
         policyVersion: input.payload.consentVersion,
         sourceIp: input.sourceIp,
         userAgent: input.userAgent

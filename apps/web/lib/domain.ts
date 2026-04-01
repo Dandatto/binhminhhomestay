@@ -29,6 +29,7 @@ export type ConsentInput = {
   subjectRef: string;
   consentType: string;
   consentGiven: boolean;
+  consentCrossBorder?: boolean;
   policyVersion: string;
   sourceIp?: string;
   userAgent?: string;
@@ -66,6 +67,7 @@ export type BookingAggregateInput = {
   consent: {
     consentType: string;
     consentGiven: boolean;
+    consentCrossBorder?: boolean;
     policyVersion: string;
     sourceIp?: string;
     userAgent?: string;
