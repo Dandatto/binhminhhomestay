@@ -12,7 +12,7 @@
 | **Người lập** | Kiểm toán viên hệ thống (AI-assisted) |
 | **Stack** | Next.js 15 · React 19 · TypeScript · PostgreSQL · Vercel |
 | **Domain** | binhminh.quangninh.vn |
-| **Giai đoạn hiện tại** | Phase 5/6 hoàn tất — chuẩn bị Go-live |
+| **Giai đoạn hiện tại** | Phase D — IN PROGRESS (Security & Infrastructure Hardening Report) |
 
 ---
 
