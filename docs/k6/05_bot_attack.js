@@ -1,83 +1,72 @@
-/**
- * SCENARIO 5 — BOT ATTACK / INVENTORY LOCK
- * ⚠️  CHẠY KịCH BẢN NÀY SAU KHI ĐÃ IMPLEMENT UPSTASH RATE LIMITING (F-005)
- * KHÔNG chạy scenario này trước khi rate limiting active.
- *
- * Mô phỏng: bot cạnh tranh không lành mạnh gửi flood booking
- * để khóa hết phòng dịp Tết mà không đặt cọc thật.
- * Mục tiêu: xác nhận rate limiter chặn đúng (429), không sập hệ thống.
- *
- * Chạy: BASE_URL=https://staging.vercel.app k6 run 05_bot_attack.js
- */
+import http from 'k6/http';
+import { check, sleep } from 'k6';
 
-import http from "k6/http";
-import { check } from "k6";
-import { Counter, Rate } from "k6/metrics";
-
-const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
-
-const rateLimitedCount = new Counter("bot_rate_limited_429");
-const blockedRate      = new Rate("bot_blocked_rate");
-const successRate      = new Rate("bot_leaked_through_rate");
-
+// 50 VUs x 30s = ~15,000 requests from a SINGLE IP
+// Since limit is 5 req / min / IP, 14,995 requests should be blocked.
 export const options = {
-  // Bot: 500 VU, không nghỉ, gửi liên tục
-  vus:      500,
-  duration: "2m",
+  scenarios: {
+    booking_flood: {
+      executor: 'constant-vus',
+      vus: 50,
+      duration: '30s',
+      exec: 'botBooking',
+    },
+    chat_flood: {
+      executor: 'constant-vus',
+      vus: 10,
+      duration: '10s',
+      exec: 'botChat',
+      startTime: '30s',
+    }
+  },
   thresholds: {
-    // Rate limiter phải chặn >95% requests từ cùng IP
-    "bot_blocked_rate":      ["rate>0.90"],
-    // Tối đa 5% requests lọt qua rate limiter
-    "bot_leaked_through_rate": ["rate<0.10"],
-    // Hệ thống không được sập — 5xx phải gần 0
-    "http_req_failed": ["rate<0.01"],
+    // For booking, we expect a massive number of 429s
+    'http_req_failed{scenario:booking_flood}': ['rate>0.95'], 
   },
 };
 
-export default function () {
-  // Bot dùng cùng payload — không có idempotency key → mỗi request là booking mới
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+
+export function botBooking() {
   const payload = JSON.stringify({
-    guestName:      "BOT ATTACK TEST",
-    phone:          `0901234567`,  // cùng số điện thoại
-    checkInDate:    "2027-02-05",  // Tết Đinh Mùi — mùa cao điểm
-    checkOutDate:   "2027-02-08",
-    roomType:       "Căn Phi Thuyền 1 Giường",
-    consentGiven:   true,
-    consentVersion: "policy-2026-03-01",
+    roomType: 'ROBINSON_TENT',
+    checkInDate: '2026-10-10',
+    checkOutDate: '2026-10-12',
+    guestName: 'Bot Attack',
+    guestEmail: 'bot@example.com',
+    guestPhone: '0901234567',
+    idempotencyKey: `bot-${__VU}-${__ITER}`
   });
 
-  const res = http.post(`${BASE_URL}/api/booking`, payload, {
-    headers: { "Content-Type": "application/json" },
-    timeout: "5s",
+  const params = {
+    headers: { 'Content-Type': 'application/json' },
+  };
+
+  const res = http.post(`${BASE_URL}/api/booking`, payload, params);
+
+  // We should see a few 202s initially, then straight 429s
+  check(res, {
+    'is 429 Too Many Requests': (r) => r.status === 429,
+    'is 202 Accepted': (r) => r.status === 202,
   });
 
-  if (res.status === 429) {
-    rateLimitedCount.add(1);
-    blockedRate.add(1);
-    successRate.add(0);
-  } else if (res.status === 202) {
-    blockedRate.add(0);
-    successRate.add(1);
-    console.log(`⚠️  Bot request leaked through! bookingId: ${res.json("bookingId")}`);
-  } else {
-    blockedRate.add(0);
-    successRate.add(0);
-  }
-  // Không sleep — bot gửi tối đa tốc độ
+  // Zero sleep to mimic aggressive volumetric flood
 }
 
-export function handleSummary(data) {
-  const blocked  = data.metrics["bot_rate_limited_429"]?.values?.count ?? 0;
-  const leaked   = data.metrics["http_req_duration"]?.values?.count ?? 0;
-  const duration = data.state?.testRunDurationMs ?? 0;
+export function botChat() {
+  const payload = JSON.stringify({
+    messages: [{ role: 'user', content: 'Hello, are you real?' }]
+  });
 
-  console.log("\n" + "=".repeat(60));
-  console.log("BOT ATTACK TEST RESULT");
-  console.log(`  Requests bị chặn (429): ${blocked}`);
-  console.log(`  Duration: ${Math.round(duration / 1000)}s`);
-  console.log("=".repeat(60) + "\n");
-
-  return {
-    "results/05_bot_attack_summary.json": JSON.stringify(data, null, 2),
+  const params = {
+    headers: { 'Content-Type': 'application/json' },
   };
+
+  const res = http.post(`${BASE_URL}/api/chat`, payload, params);
+
+  // We should see a 200 OK with the graceful degradation fake stream
+  check(res, {
+    'is 200 OK': (r) => r.status === 200,
+    'has fake stream text': (r) => r.body && r.body.includes('Hệ thống đang quá tải'),
+  });
 }

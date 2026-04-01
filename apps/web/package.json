@@ -21,6 +21,8 @@
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/react": "^3.0.143",
     "@tailwindcss/typography": "^0.5.19",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "@vercel/blob": "^2.3.2",
     "ai": "^6.0.141",
     "clsx": "^2.1.1",
