@@ -18,7 +18,7 @@
 
 ### Kết luận chính
 
-Hệ thống Bình Minh Homestay CMS đã được kiểm toán trên **5 trong 9 lĩnh vực** theo kế hoạch AUDIT_PLAN_2026.md. Trong phạm vi đã kiểm toán, hệ thống đã được **hardened đáng kể**: 17/22 phát hiện đã được xử lý, lỗ hổng double-booking nghiêm trọng nhất đã được vá bằng cơ chế defense-in-depth, và hạ tầng đã chịu được 300 VUs dưới cấu hình production.
+Hệ thống Bình Minh Homestay CMS đã được kiểm toán trên **5 trong 9 lĩnh vực** theo kế hoạch AUDIT_PLAN_2026.md. Trong phạm vi đã kiểm toán, hệ thống đã được **hardened đáng kể**: 18/23 phát hiện đã được xử lý, lỗ hổng double-booking nghiêm trọng nhất đã được vá bằng cơ chế defense-in-depth, và hạ tầng đã chịu được 300 VUs dưới cấu hình production.
 
 **Tuy nhiên, hệ thống CHƯA ĐỦ ĐIỀU KIỆN GO-LIVE** theo tiêu chí §8.2 của Audit Plan do 2 rào cản bắt buộc:
 
@@ -45,7 +45,7 @@ Hệ thống Bình Minh Homestay CMS đã được kiểm toán trên **5 trong 
 
 ## 2. HARDENING MILESTONES (Những gì đã hoàn thành)
 
-### 2.1 Phase B — Static Analysis (15 findings)
+### 2.1 Phase B — Static Analysis (16 findings)
 
 | ID | Mức | Vấn đề | Trạng thái |
 |---|---|---|---|
@@ -66,7 +66,7 @@ Hệ thống Bình Minh Homestay CMS đã được kiểm toán trên **5 trong 
 | F-015 | 🟡 Medium | Booking cho phép ngày quá khứ | ✅ CLOSED — `checkInDate >= today` |
 | F-016 | 🟢 Low | Article content không giới hạn size | ✅ CLOSED |
 
-**Tổng kết Phase B:** 12/15 closed, 2 open (BLOCKER), 1 deferred.
+**Tổng kết Phase B:** 13/16 closed, 2 open (BLOCKER), 1 deferred.
 
 ### 2.2 Phase C — Dynamic Testing (7 findings)
 
