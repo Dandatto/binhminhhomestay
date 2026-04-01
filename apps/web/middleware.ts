@@ -66,9 +66,11 @@ function createBrandVoiceStream(message: string): ReadableStream {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // 1. Rate Limiting Protection (for /api routes only)
   if (hasRedis && pathname.startsWith('/api')) {
-    const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+    // request.ip is provided by Vercel for the real client IP.
+    // Fallback to the first IP in x-forwarded-for if we are behind another proxy.
+    // @ts-ignore: `ip` can be missing from typedefs in Next 15 but is strictly populated by Vercel Edge.
+    const ip = request.ip ?? request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? '127.0.0.1';
     
     try {
       if (pathname.startsWith('/api/booking')) {

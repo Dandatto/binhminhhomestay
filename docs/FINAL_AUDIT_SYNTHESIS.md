@@ -166,9 +166,10 @@ Tất cả số liệu dưới đây được trích xuất từ file JSON trong
 
 | ID | Mức | Rủi ro | Trạng thái hiện tại | Hành động tiếp |
 |---|---|---|---|---|
-| F-005 | 🔴 Critical | Bot flood `/api/booking` — khóa phòng giả, drain DB pool | **OPEN — BLOCKER GO-LIVE** | Implement Upstash Redis + Edge Middleware (Phase E) |
-| F-004 | 🔴 Critical | DB tại Seoul — vi phạm tiềm tàng Luật ANMX Điều 26 | **OPEN — BLOCKER GO-LIVE** | Tham vấn luật sư CNTT → quyết định phương án A/B/C |
-| F-007 | 🟠 High | `/api/chat` public, gọi paid LLM không giới hạn | DEFERRED — chờ F-005 | Rate limit cùng lúc với booking |
+| F-005 | 🔴 Critical | Bot flood `/api/booking` — khóa phòng giả, drain DB pool | ✅ **CLOSED** | Đã implement Upstash Rate Limiting tại Edge |
+| — | 🟠 High | Distributed Botnet (Residual Risk) | 🟡 ACCEPTED | Mỗi IP gửi < 5 req/min lách rate limit. Cần CAPTCHA hoặc Vercel WAF (Pro) nếu bị tấn công thực tế |
+| F-004 | 🔴 Critical | DB tại Seoul — vi phạm tiềm tàng Luật ANMX Điều 26 | **OPEN — BLOCKER GO-LIVE** | Tham vấn luật sư CNTT → quyết định phương án A, B hoặc C |
+| F-007 | 🟠 High | `/api/chat` public, gọi paid LLM không giới hạn | ✅ **CLOSED** | Đã chặn bằng Rate Limit + Graceful fake stream |
 | PC-006 | 🟡 Medium | `flatted` CVE — Prototype Pollution | OPEN — cần investigate | Kiểm tra xem có dùng trong runtime hay chỉ devDependency |
 | PC-007 | 🟡 Medium | CSP `unsafe-inline` giảm hiệu lực chống XSS | ACCEPTED MVP | Plan nonce-based CSP sau go-live |
 
@@ -195,8 +196,8 @@ Tất cả số liệu dưới đây được trích xuất từ file JSON trong
 
 | # | Tiêu chí §8.2 | Đạt? | Bằng chứng |
 |---|---|---|---|
-| 1 | Không có lỗ hổng 🔴 Critical chưa fix | ❌ | **F-005 và F-004 vẫn OPEN** |
-| 2 | Rate limiting hoạt động trên `/api/booking` | ❌ | **F-005 chưa implement** |
+| 1 | Không có lỗ hổng 🔴 Critical chưa fix | ❌ | **F-004 vẫn OPEN (Blocker pháp lý)** |
+| 2 | Rate limiting hoạt động trên `/api/booking` | ✅ | **F-005 CLOSED (Scenario 05 verified)** |
 | 3 | Admin API routes bảo vệ timing-safe | ✅ | F-006 CLOSED — `verifyAdminToken()` |
 | 4 | DB connection pool cấu hình phù hợp | ✅ | PC-005 CLOSED — `connectionTimeoutMillis: 5000` |
 | 5 | Load test Baseline + Normal Peak pass (<0.1% error) | ✅ | Scenario 01 (0.04%) + Scenario 02 (0%) |
@@ -218,12 +219,14 @@ Tất cả số liệu dưới đây được trích xuất từ file JSON trong
 
 ### 5.3 Phán quyết
 
-**CHƯA ĐẠT — BLOCKED BY 2 CRITICAL ITEMS**
+**CHƯA ĐẠT — BLOCKED BY 1 CRITICAL ITEM (LEGAL)**
 
-Hệ thống đã **READY về concurrency, data integrity, và infrastructure hardening**. Tuy nhiên, theo tiêu chí §8.2 nghiêm ngặt, Go-Live Sign-off (D7) không thể được cấp cho đến khi:
+Hệ thống đã **READY về concurrency, data integrity, infrastructure hardening và bảo mật DDoS/Bot**. Tầng phòng thủ mạng F-005 & F-007 đã được hoàn tất ở mức Edge. Tuy nhiên, theo tiêu chí §8.2 nghiêm ngặt, Go-Live Sign-off (D7) không thể được cấp cho đến khi:
 
-1. **F-005** — Rate limiting được implement và verified (Scenario 05 bot attack pass)
-2. **F-004** — Phương án data sovereignty được quyết định (có xác nhận từ tư vấn pháp lý)
+1. **F-004** — Phương án data sovereignty được quyết định bởi Owner sau khi tham vấn luật sư:
+   - *Phương án A*: Mã hóa AES-256 (3-5 ngày, giảm rủi ro tạm thời)
+   - *Phương án B*: Di dời DB về Cloud nội địa VN (1-2 tuần, tuân thủ tuyệt đối)
+   - *Phương án C*: Tách Schema (2-3 tuần, tối ưu chi phí & compliance)
 
 ---
 
@@ -235,10 +238,7 @@ Danh sách việc cần làm, sắp xếp theo mức ưu tiên thực hiện.
 
 | # | ID | Mô tả | Owner | Ước lượng |
 |---|---|---|---|---|
-| 1 | F-005 | Implement Upstash Redis rate limiting — Edge Middleware | Dev | 1–2 ngày |
-| 2 | F-004 | Quyết định phương án data sovereignty (A/B/C) | Owner + Pháp lý | Tùy thuộc tư vấn |
-| 3 | F-007 | Rate limit `/api/chat` (bảo vệ LLM cost) | Dev | Cùng lúc F-005 |
-| 4 | — | Chạy Scenario 05 (bot attack) sau khi F-005 xong | Dev | 0.5 ngày |
+| 1 | F-004 | Quyết định phương án data sovereignty (A/B/C) | Owner + Pháp lý | Tùy thuộc tư vấn |
 
 ### 6.2 Nên hoàn thành trước hoặc ngay sau Go-Live
 
@@ -270,7 +270,7 @@ Các lĩnh vực sau đây **chưa được kiểm toán** và cần được th
 | **LĐ6 — Logic nghiệp vụ** | Pricing engine (seasonal, group, early bird), booking cancellation TTL, vessel schedule logic, refund flow | FE hoàn thiện |
 | **LĐ7 — Performance & SEO** | Core Web Vitals (LCP/CLS/INP), Vietnamese Travel SEO, Schema.org LodgingBusiness, AEO/GEO, Social OG tags | FE hoàn thiện |
 | **LĐ8 — Thanh toán** | VietQR amount tampering, payment confirmation flow (manual vs auto), double payment prevention, reconciliation | Payment flow finalized |
-| **LĐ4 — Phòng thủ (remaining)** | Scenario 05 bot attack, inventory lock attack sustained test, admin credential brute-force | F-005 implemented |
+| **LĐ4 — Phòng thủ (remaining)** | Inventory lock attack sustained test, admin credential brute-force | Đã hoàn thành F-005 |
 
 Các lĩnh vực này được hoãn có lý do hợp lệ: FE chưa hoàn thiện nên kiểm toán UX và business logic sẽ tạo ra findings không chính xác. Tuy nhiên, chúng **phải được thực hiện** trước khi phát hành D7 (Go-Live Readiness Sign-off) cuối cùng theo §8.1 của Audit Plan.
 
