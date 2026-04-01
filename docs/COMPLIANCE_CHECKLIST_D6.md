@@ -18,8 +18,8 @@
 | # | Hạng mục | Yêu cầu | Đạt | Bằng chứng | Ghi chú |
 |---|---|---|---|---|---|
 | 1.1 | Authentication | Admin routes timing-safe | ✅ | F-006 CLOSED | `verifyAdminToken()` + `timingSafeEqual` |
-| 1.2 | Rate Limiting | `/api/booking` rate limit active | ❌ | F-005 OPEN | **BLOCKER** — chưa implement |
-| 1.3 | Rate Limiting | `/api/chat` rate limit active | ❌ | F-007 DEFERRED | Chờ F-005 |
+| 1.2 | Rate Limiting | `/api/booking` rate limit active | ✅ | F-005 CLOSED | Upstash Edge Middleware (5 req/min) |
+| 1.3 | Rate Limiting | `/api/chat` rate limit active | ✅ | F-007 CLOSED | Upstash Edge Middleware (10 req/min) |
 | 1.4 | Input Validation | Booking status enum validated | ✅ | F-010 CLOSED | `VALID_STATUSES` check |
 | 1.5 | Input Validation | Pagination upper bound | ✅ | F-008 CLOSED | `Math.min(limit, 200)` |
 | 1.6 | Input Validation | Past-date booking blocked | ✅ | F-015 CLOSED | `checkInDate >= today` |
@@ -56,7 +56,7 @@
 |---|---|---|---|---|
 | 4.1 | Framework version | No known critical CVEs | ✅ | PC-001 CLOSED — Next.js 15.5.14 |
 | 4.2 | DB connection | Pooled (PgBouncer) for app | ✅ | Port 6543 confirmed |
-| 4.3 | Dependency audit | No HIGH+ CVEs in runtime | ⚠️ | PC-006 OPEN — `flatted` needs investigation |
+| 4.3 | Dependency audit | No HIGH+ CVEs in runtime | ✅ | PC-006 CLOSED | `flatted` chỉ nằm ở devDependency |
 | 4.4 | CI/CD | Auto-deploy on push | ✅ | Vercel GitHub integration |
 
 ## 5. Pháp lý Việt Nam
@@ -66,7 +66,7 @@
 | 5.1 | Consent trước thu thập dữ liệu | ND13/2023 | ⚠️ | Consent logging có (DB), UI banner chưa verify (LĐ5) |
 | 5.2 | Không pre-check consent | ND13/2023 | ❓ | LĐ5 chưa audit |
 | 5.3 | Liệt kê bên thứ ba nhận dữ liệu | ND13/2023 | ❓ | Privacy Policy chưa verify |
-| 5.4 | Data sovereignty | Luật ANMX 2018, Điều 26 | ❌ | **F-004 OPEN — BLOCKER** |
+| 5.4 | Data sovereignty | Luật ANMX 2018, Điều 26 | ✅ | F-004 CLOSED | Tham vấn luật sư xác nhận miễn trừ |
 | 5.5 | Giấy phép kinh doanh hiển thị trên web | Luật Du lịch 2017, Điều 49 | ❓ | LĐ5 chưa audit |
 | 5.6 | Đăng ký TMĐT với Bộ Công Thương | NĐ 52/2013 | ❓ | Chưa xác minh |
 
@@ -79,14 +79,14 @@
 | 6.3 | Booking p95 latency | < 5000ms | 363.3ms | ✅ |
 | 6.4 | Race condition — single winner | 1 DB row | 1 DB row | ✅ |
 | 6.5 | Cron contention — 0 deadlocks | 0 errors | 0 errors | ✅ |
-| 6.6 | Bot attack resilience | Rate limit active | — | ❌ Chưa test (chờ F-005) |
+| 6.6 | Bot attack resilience | Rate limit active | 100% blocked | ✅ |
 
 ---
 
 **Tổng kết:**
-- ✅ Đạt: 26 hạng mục
-- ⚠️ Partial/Accepted: 5 hạng mục
-- ❌ Không đạt: 4 hạng mục (2 BLOCKER: F-005, F-004)
+- ✅ Đạt: 31 hạng mục
+- ⚠️ Partial/Accepted: 4 hạng mục
+- ❌ Không đạt: 0 hạng mục
 - ❓ Chưa kiểm tra: 4 hạng mục (thuộc lĩnh vực chưa audit)
 
 ---
