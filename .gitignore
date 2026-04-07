@@ -38,3 +38,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# code-review-graph — generated database, không commit lên GitHub
+.code-review-graph/

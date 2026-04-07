@@ -1,0 +1,39 @@
+# Binh Minh Homestay 2026 — code-review-graph exclusions
+# File này nên được commit lên GitHub (patterns đều là relative glob, portable hoàn toàn)
+# Không thêm file này vào .gitignore
+
+# JavaScript/Node dependencies
+node_modules/**
+
+# Next.js build output
+.next/**
+dist/**
+out/**
+
+# Git internals
+.git/**
+
+# Generated TypeScript artifacts
+*.generated.ts
+*.tsbuildinfo
+next-env.d.ts
+
+# Prototype / legacy directories (không phải production code)
+binhminhFE/**
+stitch_exports/**
+
+# Data / media files (không cần index vào graph)
+results/**
+room/**
+*.webp
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.docx
+*.pdf
+
+# Test scripts tạm thời ở apps/web root (không phải source chính)
+apps/web/test-*.js
+apps/web/tmp-*.js
+apps/web/find-*.js
