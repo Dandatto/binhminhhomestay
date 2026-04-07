@@ -34,12 +34,12 @@ Bạn chỉ cần nhớ lệnh `make` (chạy tại thư mục gốc của dự 
   ```
 
 - **Khi muốn xem biểu đồ mạng lưới giao diện Web**
-  Mở bản đồ HTML tương tác trên trình duyệt:
+  Mở màn hình Bản đồ tương tác lớn có các bong bóng kết nối:
   ```bash
   // turbo
   make crg-map
   ```
-  *(Hệ thống sẽ chạy một HTTP server nội bộ tại port 8000 để bạn xem bản đồ).*
+  *(Lệnh sẽ tự động render file `graph.html` và gọi bộ mở mặc định của máy Mac để bật trình duyệt Web cho bạn xem trải nghiệm ngay lập tức).*
 
 
 ## 2. Dành Khi Tương Tác Cùng Trợ Lý AI (Claude/Antigravity)

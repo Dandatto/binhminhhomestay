@@ -28,6 +28,8 @@ crg-status:
 crg-impact:
 	$(CRG) detect-changes
 
-## Sinh bản đồ trực quan HTML (mở bằng browser)
+## Sinh bản đồ trực quan HTML (tự động mở bằng trình duyệt)
 crg-map:
 	$(CRG) visualize
+	@open .code-review-graph/graph.html 2>/dev/null || echo "Bản đồ đã được tạo tại .code-review-graph/graph.html"
+
