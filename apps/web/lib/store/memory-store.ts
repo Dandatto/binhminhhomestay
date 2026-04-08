@@ -16,7 +16,9 @@ import type {
   MediaAsset,
   Article,
   CreateArticleInput,
-  UpdateArticleInput
+  UpdateArticleInput,
+  RoomSession,
+  CreateRoomSessionInput,
 } from "../domain";
 import type { AppStore, CompleteIdempotencyInput } from "./interface";
 
@@ -327,8 +329,8 @@ export class MemoryStore implements AppStore {
     if (idx !== -1) this.vessels.splice(idx, 1);
   }
 
+  // Giá seed theo phong.pdf (nguồn sự thật) — không có pricing_combo
   private settings: Record<string, string> = {
-    'pricing_combo': '3065000',
     'pricing_room_2_bed': '1600000',
     'pricing_room_1_bed': '1400000',
     'pricing_homestay_2_bed': '1400000',
@@ -426,6 +428,41 @@ export class MemoryStore implements AppStore {
     }
     const sorted = [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return { articles: sorted.slice(offset, offset + limit), total: list.length };
+  }
+
+  // ─── Room Sessions (in-memory stubs for dev) ──────────────────────────────
+  private roomSessions: RoomSession[] = [];
+
+  async createRoomSession(input: CreateRoomSessionInput): Promise<RoomSession> {
+    const session: RoomSession = {
+      id: randomUUID(), bookingId: input.bookingId,
+      roomType: input.roomType, guestName: input.guestName,
+      guestEmail: input.guestEmail, token: randomUUID(),
+      checkIn: nowIso(), checkOut: input.checkOut, createdAt: nowIso(),
+    };
+    this.roomSessions.push(session);
+    return session;
+  }
+
+  async getRoomSessionByToken(token: string): Promise<RoomSession | null> {
+    return this.roomSessions.find(s => s.token === token) ?? null;
+  }
+
+  async terminateRoomSession(token: string): Promise<void> {
+    const s = this.roomSessions.find(s => s.token === token);
+    if (s) s.terminatedAt = nowIso();
+  }
+
+  async extendRoomSession(token: string, newCheckOut: string): Promise<RoomSession> {
+    const s = this.roomSessions.find(s => s.token === token);
+    if (!s) throw new Error("Session not found");
+    s.checkOut = newCheckOut;
+    return s;
+  }
+
+  async getActiveRoomSessions(): Promise<RoomSession[]> {
+    const now = new Date();
+    return this.roomSessions.filter(s => !s.terminatedAt && new Date(s.checkOut) > now);
   }
 }
 

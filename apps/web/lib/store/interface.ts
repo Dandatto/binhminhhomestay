@@ -14,7 +14,9 @@ import type {
   MediaAsset,
   Article,
   CreateArticleInput,
-  UpdateArticleInput
+  UpdateArticleInput,
+  RoomSession,
+  CreateRoomSessionInput,
 } from "../domain";
 
 export type CompleteIdempotencyInput = {
@@ -66,6 +68,13 @@ export interface AppStore {
   getArticleById(id: string): Promise<Article | null>;
   getArticleBySlug(slug: string): Promise<Article | null>;
   getArticles(limit?: number, offset?: number, onlyPublished?: boolean): Promise<{ articles: Article[]; total: number }>;
+
+  // Room Sessions (Guest Auth)
+  createRoomSession(input: CreateRoomSessionInput): Promise<RoomSession>;
+  getRoomSessionByToken(token: string): Promise<RoomSession | null>;
+  terminateRoomSession(token: string): Promise<void>;
+  extendRoomSession(token: string, newCheckOut: string): Promise<RoomSession>;
+  getActiveRoomSessions(): Promise<RoomSession[]>;
 }
 
 

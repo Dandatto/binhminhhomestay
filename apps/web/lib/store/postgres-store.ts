@@ -17,7 +17,9 @@ import type {
   Article,
   ArticleStatus,
   CreateArticleInput,
-  UpdateArticleInput
+  UpdateArticleInput,
+  RoomSession,
+  CreateRoomSessionInput,
 } from "../domain";
 import type { AppStore, CompleteIdempotencyInput } from "./interface";
 
@@ -768,6 +770,73 @@ export class PostgresStore implements AppStore {
       createdAt: asString(row.created_at),
       updatedAt: asString(row.updated_at)
     };
+  }
+
+  // ─── Room Sessions ────────────────────────────────────────────────────────
+
+  private mapSessionRow(row: Record<string, unknown>): RoomSession {
+    return {
+      id:           asString(row.id),
+      bookingId:    asString(row.booking_id),
+      roomType:     asString(row.room_type),
+      guestName:    asString(row.guest_name),
+      guestEmail:   typeof row.guest_email === "string" ? row.guest_email : undefined,
+      token:        asString(row.token),
+      checkIn:      asString(row.check_in),
+      checkOut:     asString(row.check_out),
+      terminatedAt: typeof row.terminated_at === "string" ? row.terminated_at :
+                    row.terminated_at instanceof Date ? row.terminated_at.toISOString() : undefined,
+      createdAt:    asString(row.created_at),
+    };
+  }
+
+  async createRoomSession(input: CreateRoomSessionInput): Promise<RoomSession> {
+    const pool = await this.pool();
+    const result = await pool.query(
+      `insert into room_sessions (booking_id, room_type, guest_name, guest_email, check_out)
+       values ($1, $2, $3, $4, $5)
+       returning *`,
+      [input.bookingId, input.roomType, input.guestName, input.guestEmail ?? null, input.checkOut]
+    );
+    return this.mapSessionRow(result.rows[0]);
+  }
+
+  async getRoomSessionByToken(token: string): Promise<RoomSession | null> {
+    const pool = await this.pool();
+    const result = await pool.query(
+      `select * from room_sessions where token = $1 limit 1`,
+      [token]
+    );
+    if (result.rows.length === 0) return null;
+    return this.mapSessionRow(result.rows[0]);
+  }
+
+  async terminateRoomSession(token: string): Promise<void> {
+    const pool = await this.pool();
+    await pool.query(
+      `update room_sessions set terminated_at = now() where token = $1`,
+      [token]
+    );
+  }
+
+  async extendRoomSession(token: string, newCheckOut: string): Promise<RoomSession> {
+    const pool = await this.pool();
+    const result = await pool.query(
+      `update room_sessions set check_out = $1 where token = $2 returning *`,
+      [newCheckOut, token]
+    );
+    if (result.rows.length === 0) throw new Error("Session not found");
+    return this.mapSessionRow(result.rows[0]);
+  }
+
+  async getActiveRoomSessions(): Promise<RoomSession[]> {
+    const pool = await this.pool();
+    const result = await pool.query(
+      `select * from room_sessions
+       where terminated_at is null and check_out > now()
+       order by check_out asc`
+    );
+    return result.rows.map(r => this.mapSessionRow(r));
   }
 }
 

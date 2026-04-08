@@ -40,7 +40,6 @@ export async function GET(req: Request) {
         // Tìm giá dựa vào roomType
         const priceKey = (() => {
           const rt = booking.roomType.toLowerCase();
-          if (rt.includes("combo")) return "pricing_combo";
           if (rt.includes("phi thuyền") && rt.includes("2")) return "pricing_room_2_bed";
           if (rt.includes("phi thuyền") && rt.includes("1")) return "pricing_room_1_bed";
           if (rt.includes("homestay") && rt.includes("2")) return "pricing_homestay_2_bed";

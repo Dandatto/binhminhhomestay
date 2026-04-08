@@ -32,4 +32,10 @@ export const env = {
   vietqrAccountName: process.env.VIETQR_ACCOUNT_NAME ?? "BINH MINH HOMESTAY",
   depositRatio: parseFloat(process.env.DEPOSIT_RATIO ?? "0.30"),
 
+  // Guest + Admin Auth
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  adminPin: process.env.ADMIN_PIN ?? "",
+  adminSessionSecret: process.env.ADMIN_SESSION_SECRET ?? "dev-secret-change-in-prod",
+  qrTtlSeconds: toInt(process.env.QR_TTL_SECONDS, 300),       // 5 minutes
+  magicLinkTtlSeconds: toInt(process.env.MAGIC_LINK_TTL_SECONDS, 86400), // 24 hours
 };

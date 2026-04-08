@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
+import {
+  getRoomSessionTokenFromRequest,
+  getAdminSessionTokenFromRequest,
+  verifyAdminSession,
+} from '@/lib/session';
 
 // Initialize Redis explicitly
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL || "";
@@ -85,7 +90,7 @@ export async function middleware(request: NextRequest) {
       else if (pathname.startsWith('/api/chat')) {
         const { success } = await chatLimiter!.limit(ip);
         if (!success) {
-          const stream = createBrandVoiceStream("Hệ thống đang quá tải do có quá nhiều người cùng hỏi Long Xì. Bác chịu khó chờ khoảng một phút rồi hỏi lại em nhé!");
+          const stream = createBrandVoiceStream("Quá nhiều người đang hỏi Long Xì AI. Bác chịu khó chờ một chốc nữa rồi hỏi lại em nhé!");
           return new NextResponse(stream, {
             status: 200,
             headers: { 
@@ -110,16 +115,45 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ── Admin page protection ───────────────────────────────────────────────────
+  // /admin/* pages require a valid admin_session cookie.
+  // API routes under /api/admin/* are protected by Bearer token (existing logic).
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/api')) {
+    const adminToken = getAdminSessionTokenFromRequest(request);
+    if (!verifyAdminSession(adminToken)) {
+      return NextResponse.redirect(new URL('/vao', request.url));
+    }
+  }
+
+  // ── Guest session expiry check ──────────────────────────────────────────────
+  // Does NOT gate pages — session is additive context, not a barrier.
+  // Only auto-kicks if the session cookie exists but the session has expired.
+  // The actual DB lookup happens in API routes; here we do lightweight header injection only.
+  const roomToken = getRoomSessionTokenFromRequest(request);
+  if (roomToken) {
+    // Pass room session token to API routes via header so they can enrich context
+    // without a second cookie lookup. Page routes read the cookie directly.
+    const response = NextResponse.next();
+    response.headers.set('X-Room-Session-Token', roomToken);
+
+    // Privacy consent check
+    if (!pathname.startsWith('/api')) {
+      const consent = request.cookies.get('privacy-consent');
+      if (!consent) response.headers.set('X-Privacy-Protected', 'true');
+    }
+    return response;
+  }
+
   const response = NextResponse.next();
-  
-  // 2. Checking for the privacy-consent cookie
+
+  // Privacy consent check
   if (!pathname.startsWith('/api')) {
     const consent = request.cookies.get('privacy-consent');
     if (!consent) {
       response.headers.set('X-Privacy-Protected', 'true');
     }
   }
-  
+
   return response;
 }
 

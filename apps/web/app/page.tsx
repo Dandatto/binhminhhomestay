@@ -1,71 +1,89 @@
-import BentoDashboard from "@/components/BentoDashboard";
-import Script from "next/script";
-import { getStore } from "@/lib/store";
-import Image from "next/image";
+'use client';
 
-export const revalidate = 60; // Cache 1 minute
+import { StoriesBar } from '@/components/StoriesBar';
+import { ActionBar } from '@/components/ActionBar';
+import { ChatTeaser } from '@/components/ChatTeaser';
+import { HomeStatusBar } from '@/components/HomeStatusBar';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useTheme } from '@/components/ThemeProvider';
+import { motion, AnimatePresence } from 'motion/react';
 
-export default async function HomePage() {
-  const store = getStore();
-  const settings = await store.getSettings();
-  const heroBg = settings.HOME_HERO_BG;
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Hotel",
-    "name": "Binh Minh Homestay",
-    "description": "Nơi đón bình minh sớm nhất trên đảo Minh Châu.",
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": "Vân Đồn",
-      "addressRegion": "Quảng Ninh",
-      "addressCountry": "VN"
-    },
-    "starRating": {
-      "@type": "Rating",
-      "ratingValue": "5"
-    }
+export default function HomePage() {
+  const { theme } = useTheme();
+
+  // Map themes to local generated images
+  const themeAssets = {
+    dawn: '/hero-dawn.png',
+    day: '/hero-day.png',
+    dusk: '/hero-dusk.png',
+    night: '/hero-night.png'
+  };
+
+  const overlayStyles = {
+    dawn: 'from-black/20 via-transparent to-black/60',
+    day: 'from-black/30 via-transparent to-black/70',
+    dusk: 'from-black/40 via-transparent to-black/80',
+    night: 'from-black/60 via-transparent to-black/90'
   };
 
   return (
-    <main className="pb-24 relative md:pb-0 h-[100dvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory md:h-auto md:overflow-visible md:snap-none">
-      <Script
-        id="hotel-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      
-      {/* Dynamic Hero Background */}
-      {heroBg && (
-        <div className="absolute top-0 left-0 w-full h-[100dvh] -z-10 bg-ocean-blue">
-          <Image 
-            src={heroBg} 
-            alt="Binh Minh Homestay Hero" 
-            fill
-            priority
-            quality={90}
-            unoptimized={heroBg.includes('vercel-storage.com') || heroBg.includes('placehold.co')}
-            className="object-cover opacity-60" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-ocean-blue/30 via-transparent to-sand-white" />
+    <div className="h-screen w-full overflow-hidden bg-bg-primary relative transition-colors duration-1000">
+      {/* TikTok Feed Hybrid Style (Main One-page View) */}
+      <section className="h-full w-full relative">
+        {/* Header for Home */}
+        <div className="absolute top-0 left-0 right-0 z-40 px-[max(1.5rem,10vw)] h-20 flex items-center justify-end">
+          <div className="mt-safe-top">
+            <LanguageSwitcher />
+          </div>
         </div>
-      )}
 
-      {/* Hero Snap Section */}
-      <section className="min-h-[100dvh] w-full flex flex-col items-center justify-center px-6 text-center max-w-4xl mx-auto snap-start relative pt-12 md:pt-32 pb-24">
-        <h1 className={`text-5xl md:text-7xl font-sans tracking-tighter mb-6 leading-none ${heroBg ? 'text-white' : 'text-ocean-blue'}`}>
-          Cứ để đất liền <br /> 
-          <span className="text-sky-blue font-serif italic font-normal">đợi chúng ta một chút.</span>
-        </h1>
-        <p className={`text-lg max-w-xl mx-auto font-sans font-medium ${heroBg ? 'text-white/80' : 'text-ocean-blue/60'}`}>
-          Dandatto không nói quá, nhưng Bãi Robinson thực sự là nơi đầu tiên đón ánh bình minh sớm nhất đảo. Nghỉ ngơi tại &quot;Căn Phi Thuyền&quot; hiện đại, một khung cửa nhìn ra biển và không có tiếng báo thức.
-        </p>
-      </section>
+        {/* Full-bleed background with Cross-fade animation */}
+        <div className="absolute inset-0 bg-bg-primary overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={theme}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.9 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0"
+            >
+              <img 
+                src={themeAssets[theme]} 
+                alt={`Minh Chau ${theme}`}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
+          
+          {/* Edge vignette — focus eye toward center, subtly darkens periphery on desktop */}
+          <div
+            className="absolute inset-0 z-10 pointer-events-none"
+            style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.35) 0%, transparent 18%, transparent 82%, rgba(0,0,0,0.35) 100%)' }}
+          />
+          {/* M3 Scrim: vertical gradient for caption readability */}
+          <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/20 via-transparent to-black/80 pointer-events-none transition-all duration-1000" />
+        </div>
 
-      {/* Grid Snap Section */}
-      <section className="min-h-[100dvh] w-full snap-start pb-12 pt-12 flex flex-col items-center justify-center">
-        <BentoDashboard />
+        <StoriesBar />
+        <ActionBar />
+        
+        {/* Caption & Chat Teaser Group */}
+        <div className="absolute left-[max(1.5rem,10vw)] right-[max(1.5rem,10vw)] bottom-28 z-40 flex flex-col gap-2">
+          {/* iOS Weather Widget — no card, just layered text */}
+          <HomeStatusBar />
+
+          {/* M3 Display Headline */}
+          <h1 className="font-heading text-[clamp(1.8rem,5.5vw,3.5rem)] text-[#FEF7FF] leading-tight tracking-tighter drop-shadow-sm">
+            Cứ để <strong className="text-accent font-bold">đất liền</strong> đợi chúng ta...
+          </h1>
+
+          {/* 5x gap before chips — breathing room */}
+          <div className="mt-[3.5rem]">
+            <ChatTeaser />
+          </div>
+        </div>
       </section>
-    </main>
+    </div>
   );
 }
-

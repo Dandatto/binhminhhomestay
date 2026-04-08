@@ -153,3 +153,29 @@ export type Article = {
 
 export type CreateArticleInput = Omit<Article, "id" | "createdAt" | "updatedAt">;
 export type UpdateArticleInput = Partial<CreateArticleInput>;
+
+// ─── Room Session (Guest Auth) ────────────────────────────────────────────────
+export type RoomSession = {
+  id: string;
+  bookingId: string;
+  roomType: string;           // e.g. "phi-thuyen-2"
+  guestName: string;
+  guestEmail?: string;
+  token: string;              // UUID stored in httpOnly cookie
+  checkIn: string;            // ISO timestamp
+  checkOut: string;           // ISO timestamp — hard TTL
+  terminatedAt?: string;      // set by staff on early check-out
+  createdAt: string;
+};
+
+export type CreateRoomSessionInput = {
+  bookingId: string;
+  roomType: string;
+  guestName: string;
+  guestEmail?: string;
+  checkOut: string;           // ISO timestamp from booking
+};
+
+export type ActiveRoomSession = RoomSession & {
+  minutesUntilCheckout: number;
+};
